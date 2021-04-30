@@ -26,3 +26,29 @@ Postgrsql or MariaDB
 * Design and set up db schema
 * Coordinate with Stan to receive Pi pushes
 * Secure endpoints
+
+
+### POST SCHEMA
+{
+    “ScreenId” : String,
+    “AdvertiseTo” : URL
+    “ExhibitionName” : String,
+    “DisplayNFTs” : [
+        {
+               “NFT” : String,
+               “AssetUrl” : URL
+        } 
+    ],
+    “DisplayOrder” : [
+       {
+            “MinimumDisplayDurationInSeconds” : Int,
+            “NFT” : String
+        },
+       {
+            “MinimumDisplayDurationInSeconds” : Int,
+            “NFT” : String
+        }
+    ]
+}
+
+Notes on post schema: Is the minimum display duration locked?

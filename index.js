@@ -11,11 +11,11 @@ const {body, check, validationResult} = require('express-validator')
 const app = express()
 const PORT = process.env.PORT || 3000;
 
-/*
+
 const origin = {
-    'localhost:8000' : '*',
+    'http://0f9d037097c6.ngrok.io' : '*',
 }
-*/
+
 
 
 const limiter = rateLimit({
@@ -34,7 +34,7 @@ const postLimiter = rateLimit({
 app.use(compression())
 app.use(helmet())
 app.use(limiter)
-//app.use(cors())
+app.use(cors())
 
 const getGlobalScreens = (request, response) => {
     console.log(request)
@@ -42,17 +42,18 @@ const getGlobalScreens = (request, response) => {
 }
 
 const getLocalScreens = (request, response) => {
+    console.log(request.body)
     response.json({ status: 200, message: `All screens for a location` })
 }
 
 const getScreen = (request, response) => {
-    console.log(request)
+    console.log(request.body)
     response.status(200).json({ status: 200, message: `Get a screen` })
 }
 
 const pushScreen = (request, response) => {
     console.log(request)
-    response.status(200).json({ status: 200, message: `Post to a screen` })
+    response.status(200).json({ status: 200, message: `POSTed` })
 }
 
 
@@ -65,11 +66,10 @@ app.get('/screens/:location/:id', getScreen)
 app.post('/screens/:location/:id', pushScreen)
 
 // Handles any requests that don't match the ones above
-/*
 app.get('*', (req,res) =>{
-    res.sendFile(path.join(__dirname+'/frontend/build/index.html'));
+    res.status(404).json({status: 404, message: "There's nothing here"});
 });
-*/
+
 app.listen(PORT, () => {
     console.log(`Our app is running on port ${ PORT }`);
 });
