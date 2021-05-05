@@ -90,7 +90,8 @@ const pushScreensTemp = (request, response) => {
 app.get('/', (request, response) => {
     response.json({ info: 'Hello, world' })
 })
-app.get('/screens', pushScreen)
+app.get('/screens', getGlobalScreens)
+app.post('/screens', pushScreen)
 app.get('/screens/:location', getLocalScreens)
 app.post('screens/:location', pushScreensTemp)
 app.get('/screens/:location/:id', getScreen)
