@@ -1,20 +1,20 @@
 const express = require('express')
 const cors = require('cors')
-//const { pool } = require('./config')
+const { pool } = require('./config')
 const helmet = require('helmet')
 const compression = require('compression')
 const rateLimit = require('express-rate-limit')
 const {body, check, validationResult} = require('express-validator')
-
-
+const bodyParser = require('body-parser')
 
 const app = express()
 const PORT = process.env.PORT || 3000;
 
 
 const origin = {
-    'http://0f9d037097c6.ngrok.io' : '*',
+    '*' : '*',
 }
+
 
 
 
@@ -30,11 +30,15 @@ const postLimiter = rateLimit({
   })
  
 
-//app.use(cors(origin))
+app.use(cors(origin))
 app.use(compression())
 app.use(helmet())
 app.use(limiter)
 app.use(cors())
+
+app.use(bodyParser.urlencoded());
+
+app.use(bodyParser.json());
 
 const getGlobalScreens = (request, response) => {
     console.log(request)
@@ -42,9 +46,23 @@ const getGlobalScreens = (request, response) => {
 }
 
 const getLocalScreens = (request, response) => {
+    /**** SCREEN IDs for THURSDAY ARE ****
+    4fc611ae
+    4fc6165e
+    4fc61744
+    4fc6180c */
     console.log(request.body)
     response.json({ status: 200, message: `All screens for a location` })
+    /*
+    pool.query('SELECT * FROM temp_screens', (error, results) => {
+        if (error) {
+          throw error
+        }
+        response.status(200).json(results.rows)
+      })
+      */
 }
+
 
 const getScreen = (request, response) => {
     console.log(request.body)
@@ -52,16 +70,29 @@ const getScreen = (request, response) => {
 }
 
 const pushScreen = (request, response) => {
-    console.log(request)
-    response.status(200).json({ status: 200, message: `POSTed` })
+    console.log("🚨🚨🚨🚨🚨🚨🚨🚨")
+    console.log("SOMETHING WAS JUST PUSHED")
+    // IF EXISTS With screen ID,  DROP with screen ID
+    // Create new with screen ID
+    console.log(request.body)
+    response.status(200).json({ status: 200, message: request.body })
 }
 
+const pushScreensTemp = (request, response) => {
+    console.log("🚨🚨🚨🚨🚨🚨🚨🚨")
+    console.log("SOMETHING WAS JUST PUSHED")
+    // IF EXISTS With screen ID,  DROP with screen ID
+    // Create new with screen ID
+    console.log(request.body)
+    response.status(200).json({ status: 200, message: request.body })
+}
 
 app.get('/', (request, response) => {
     response.json({ info: 'Hello, world' })
 })
-app.get('/screens', getGlobalScreens)
+app.get('/screens', pushScreen)
 app.get('/screens/:location', getLocalScreens)
+app.post('screens/:location', pushScreensTemp)
 app.get('/screens/:location/:id', getScreen)
 app.post('/screens/:location/:id', pushScreen)
 
