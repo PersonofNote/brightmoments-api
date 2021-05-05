@@ -78,22 +78,13 @@ const pushScreen = (request, response) => {
     response.status(200).json({ status: 200, message: request.body })
 }
 
-const pushScreensTemp = (request, response) => {
-    console.log("🚨🚨🚨🚨🚨🚨🚨🚨")
-    console.log("SOMETHING WAS JUST PUSHED")
-    // IF EXISTS With screen ID,  DROP with screen ID
-    // Create new with screen ID
-    console.log(request.body)
-    response.status(200).json({ status: 200, message: request.body })
-}
-
 app.get('/', (request, response) => {
     response.json({ info: 'Hello, world' })
 })
 app.get('/screens', getGlobalScreens)
 app.post('/screens', pushScreen)
 app.get('/screens/:location', getLocalScreens)
-app.post('screens/:location', pushScreensTemp)
+app.post('screens/:location', pushScreen)
 app.get('/screens/:location/:id', getScreen)
 app.post('/screens/:location/:id', pushScreen)
 
