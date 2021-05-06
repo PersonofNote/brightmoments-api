@@ -47,10 +47,10 @@ const getGlobalScreens = (request, response) => {
 
 const getLocalScreens = (request, response) => {
     /**** SCREEN IDs for THURSDAY ARE ****
-    4fc611ae
-    4fc6165e
-    4fc61744
-    4fc6180c */
+    a4fc611ae
+    a4fc6165e
+    a4fc61744
+    a4fc6180c */
     console.log(request.body)
     response.json({ status: 200, message: `All screens for a location` })
     /*
@@ -67,12 +67,15 @@ const getLocalScreens = (request, response) => {
 const getScreen = (request, response) => {
     console.log(request.body)
     target_table = request.params.id
+    console.log(target_table)
+    
     pool.query(`SELECT * FROM ${target_table}`, (error, results) => {
         if (error) {
           throw error
         }
         response.status(200).json(results.rows)
       })
+    
 }
 
 const pushScreen = (request, response) => {
