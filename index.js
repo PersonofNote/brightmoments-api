@@ -66,7 +66,13 @@ const getLocalScreens = (request, response) => {
 
 const getScreen = (request, response) => {
     console.log(request.body)
-    response.status(200).json({ status: 200, message: `Get a screen` })
+    target_table = request.params.id
+    pool.query(`SELECT * FROM ${target_table}`, (error, results) => {
+        if (error) {
+          throw error
+        }
+        response.status(200).json(results.rows)
+      })
 }
 
 const pushScreen = (request, response) => {
@@ -74,10 +80,20 @@ const pushScreen = (request, response) => {
     console.log("SOMETHING WAS JUST PUSHED")
     // IF EXISTS With screen ID,  DROP with screen ID
     // Create new with screen ID
-    url = req.url
-    console.log(req.url)
+    url = request.path
+    console.log(request.params.id)
+    target_table = request.params.id
     console.log(request.body)
-    response.status(200).json({ status: 200, message: request.body })
+    const { address, token, img_url, asset_url } = request.body
+    console.log(`Address = ${address}`)
+    
+    pool.query(`INSERT INTO ${target_table} (address, token, img_url, asset_url) VALUES ($1, $2, $3, $4)`, [address, token, img_url, asset_url], (error, results) => {
+        if (error) {
+          throw error
+        }
+        response.status(201).send(`Inserted into ${target_table}: ${results}`)
+      })
+      
 }
 
 app.get('/', (request, response) => {
