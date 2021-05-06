@@ -80,23 +80,26 @@ const getScreen = (request, response) => {
 
 const pushScreen = (request, response) => {
     console.log("🚨🚨🚨🚨🚨🚨🚨🚨")
-    console.log("SOMETHING WAS JUST PUSHED")
+    console.log(`Incoming PUSH to ${request.params.id}`)
+    const allowed_endpoints = ["a4fc611ae", "a4fc6165e","a4fc61744", "a4fc6180c"]
     // TRUNCATE target table
     // INSERT new
     url = request.path
     console.log(request.params.id)
     target_table = request.params.id
-    console.log(request.body)
     const { address, token, img_url, asset_url } = request.body
-    console.log(`Address = ${address}`)
-    // Make sure there's only ever one entry
-    pool.query(`TRUNCATE ${target_table}`)
-    pool.query(`INSERT INTO ${target_table} (address, token, img_url, asset_url) VALUES ($1, $2, $3, $4)`, [address, token, img_url, asset_url], (error, results) => {
-        if (error) {
-          throw error
-        }
-        response.status(201).send(`Inserted into ${target_table}: ${results}`)
-      })
+    if (allowed_endpoints.includes(target_table)){
+      // Make sure there's only ever one entry
+      pool.query(`TRUNCATE ${target_table}`)
+      pool.query(`INSERT INTO ${target_table} (address, token, img_url, asset_url) VALUES ($1, $2, $3, $4)`, [address, token, img_url, asset_url], (error, results) => {
+          if (error) {
+            throw error
+          }
+          response.status(201).send(`Inserted into ${target_table}: ${results}`)
+        })
+    }else{
+      response.status(111).send(`Cannot POST`)
+    }
       
 }
 
