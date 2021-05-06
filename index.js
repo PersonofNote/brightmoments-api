@@ -89,7 +89,8 @@ const pushScreen = (request, response) => {
     console.log(request.body)
     const { address, token, img_url, asset_url } = request.body
     console.log(`Address = ${address}`)
-    
+    // Make sure there's only ever one entry
+    pool.query(`TRUNCATE ${target_table}`)
     pool.query(`INSERT INTO ${target_table} (address, token, img_url, asset_url) VALUES ($1, $2, $3, $4)`, [address, token, img_url, asset_url], (error, results) => {
         if (error) {
           throw error
