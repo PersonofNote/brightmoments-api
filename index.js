@@ -34,7 +34,6 @@ app.use(cors(origin))
 app.use(compression())
 app.use(helmet())
 app.use(limiter)
-app.use(cors())
 
 app.use(bodyParser.urlencoded());
 
