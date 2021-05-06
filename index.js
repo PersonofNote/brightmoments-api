@@ -74,6 +74,8 @@ const pushScreen = (request, response) => {
     console.log("SOMETHING WAS JUST PUSHED")
     // IF EXISTS With screen ID,  DROP with screen ID
     // Create new with screen ID
+    url = req.url
+    console.log(req.url)
     console.log(request.body)
     response.status(200).json({ status: 200, message: request.body })
 }
