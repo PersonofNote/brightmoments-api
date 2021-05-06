@@ -81,8 +81,8 @@ const getScreen = (request, response) => {
 const pushScreen = (request, response) => {
     console.log("🚨🚨🚨🚨🚨🚨🚨🚨")
     console.log("SOMETHING WAS JUST PUSHED")
-    // IF EXISTS With screen ID,  DROP with screen ID
-    // Create new with screen ID
+    // TRUNCATE target table
+    // INSERT new
     url = request.path
     console.log(request.params.id)
     target_table = request.params.id
