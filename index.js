@@ -42,7 +42,7 @@ app.use(bodyParser.urlencoded());
 app.use(bodyParser.json());
 
 const getGlobalScreens = (request, response) => {
-    console.log(request)
+    console.log(request.body)
     response.json({ status: 200, message: `All screens in the world` })
 }
 
@@ -85,7 +85,8 @@ const pushScreen = (request, response) => {
     console.log(`Incoming PUSH to ${target_table}`)
     const allowed_endpoints = ["a4fc611ae", "a4fc6165e","a4fc61744", "a4fc6180c"]
     const { address, token, img_url, asset_url } = request.body
-    console.log(img_url)
+    console.log(`URL: ${img_url}`)
+    console.log(`token: ${token}`)
     if (allowed_endpoints.includes(target_table)){
       // Make sure there's only ever one entry
       pool.query(`TRUNCATE ${target_table}`)
