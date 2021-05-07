@@ -20,13 +20,15 @@ const origin = {
 
 const limiter = rateLimit({
     windowMs: 1 * 60 * 1000, // 1 minute
-    max: 20, // 5 requests,
+    max: 100, // num requests
+    message: "Too many requests, please try again later"
   })
 
   // Limit posting comments to 1 request/minute
 const postLimiter = rateLimit({
     windowMs: 1 * 60 * 1000,
-    max: 20
+    max: 20,
+
   })
  
 
