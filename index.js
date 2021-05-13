@@ -137,7 +137,8 @@ app.get('*', (req,res) =>{
     res.status(404).json({status: 404, message: "There's nothing here"});
 });
 
-cron.schedule("*/10 * * * * *", () => {
+// Every two minutes, loop through the endpoints position array and increment the position
+cron.schedule("*/2 * * * *", () => {
   let test = rotation_position['a4fc611ae']
   for (const num in rotation_position) {
     console.log(`${num}: ${rotation_position[num]}`);
