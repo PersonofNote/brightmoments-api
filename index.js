@@ -109,7 +109,7 @@ const pushScreen = (request, response) => {
     console.log(`token: ${token}`)
     if (allowed_endpoints.includes(target_table)){
       // Make sure there's only ever one entry
-      //pool.query(`TRUNCATE ${target_table}`)
+      pool.query(`TRUNCATE ${target_table}`)
       pool.query(`INSERT INTO ${target_table} (address, token, img_url, asset_url) VALUES ($1, $2, $3, $4)`, [address, token, img_url, asset_url], (error, results) => {
           if (error) {
             throw error
