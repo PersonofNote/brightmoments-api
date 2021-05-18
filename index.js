@@ -8,12 +8,33 @@ const rateLimit = require('express-rate-limit')
 const {body, check, validationResult} = require('express-validator')
 const bodyParser = require('body-parser')
 const fetch = require('node-fetch');
+const webSocketsServerPort = 1337
+/*
+const webSocketServer = require('websocket').server;
+const http = require('http')
+//Spin up servers
+const server = http.createServer()
+server.listen(webSocketsServerPort)
+const wsServer = new webSocketServer({
+  httpServer: server
+})
+
+const clients = {};
+*/
+/*
+wsServer.on('request', function(request){
+  console.log(`New request from ${request.origin}`)
+  const connection = request.accept(null, request.origin)
+  clients[userID] = connection
+  console.log(`Connected: ${Object.getOwnPropertyNames(clients)}`)
+})
+*/
 
 const initial_json = require('./initial-nfts')
 
 let token_list = []
 
-
+let on_demand_list = { }
 /* HELPER/PROCESSING FUNCTIONS */
 function isNumeric(n) {
   return !isNaN(parseFloat(n)) && isFinite(n);
@@ -88,6 +109,10 @@ fetch(`https://api.opensea.io/api/v1/assets?token_ids=${query_string}`)
     }
   }
 
+let onDemandNft = {
+  message: "Waiting for input"
+}
+
 
 const limiter = rateLimit({
     windowMs: 1 * 60 * 1000, // 1 minute
@@ -142,6 +167,7 @@ const getLocalScreens = (request, response) => {
 
 
 const getScreen = (request, response) => {
+    const allowed_endpoints = ["a4fc611ae", "a4fc6165e","a4fc61744", "a4fc6180c"]
     console.log("GET REQUEST:")
     console.log(request.body)
     target_table = request.params.id
@@ -151,7 +177,30 @@ const getScreen = (request, response) => {
     const screen_nft = nft_json[num]
     console.log(initial_json[num])
     // Update to conditional; if origin is brightmoments.com, give the full thing
-    response.status(200).json(screen_nft)
+    if (target_table ){
+      if (target_table == "a4fc6180c"){
+        response.status(200).json(onDemandNft)
+        console.log(onDemandNft.image_url)
+        console.log("SUCCESSFUL GET")
+      }else {
+        response.status(200).json(screen_nft)
+        console.log(screen_nft)
+      }
+
+      
+      /*
+      // TEST THIS
+      if (target_table == "a4fc6180c"){
+        fetch(`https://api.opensea.io/api/v1/assets?token_ids=${query_string}`)
+        .then(res => res.json())
+        .then(response.status(200).json(res))
+      }else{
+        response.status(200).json(screen_nft)
+
+      }
+      */
+    }
+    
     /*
     pool.query(`SELECT * FROM ${target_table}`, (error, results) => {
         if (error) {
@@ -170,19 +219,51 @@ const pushScreen = (request, response) => {
     const { address, token, img_url, asset_url } = request.body
     console.log(`URL: ${img_url}`)
     console.log(`token: ${token}`)
-    if (allowed_endpoints.includes(target_table)){
-      // Make sure there's only ever one entry
-      pool.query(`TRUNCATE ${target_table}`)
-      pool.query(`INSERT INTO ${target_table} (address, token, img_url, asset_url) VALUES ($1, $2, $3, $4)`, [address, token, img_url, asset_url], (error, results) => {
-          if (error) {
-            throw error
-          }
-          response.status(201).send(`Inserted into ${target_table}: ${results}`)
-        })
-    }else{
-      response.status(111).send(`Cannot POST`)
+    if (target_table == "a4fc6180c"){
+      onDemandNft = request.body.assets[0]
+      console.log(onDemandNft)
+    }
+    else{
+      if (allowed_endpoints.includes(target_table)){
+        // Make sure there's only ever one entry
+        pool.query(`TRUNCATE ${target_table}`)
+        pool.query(`INSERT INTO ${target_table} (address, token, img_url, asset_url) VALUES ($1, $2, $3, $4)`, [address, token, img_url, asset_url], (error, results) => {
+            if (error) {
+              throw error
+            }
+            response.status(201).send(`Inserted into ${target_table}: ${results}`)
+          })
+      }else{
+        response.status(111).send(`Cannot POST`)
+      }
     }
       
+}
+
+const pushOnDemand = (request, response) => {
+  target_table = request.params.id
+  console.log("🚨🚨🚨🚨🚨🚨🚨🚨")
+  console.log(`Incoming PUSH to ONDEMAND ENDPOINT: ${target_table}`)
+  const allowed_endpoints = ["a4fc6180c"]
+  const { address, token, img_url, asset_url } = request.body
+  console.log(address)
+  if (allowed_endpoints.includes(target_table)){
+    onDemandNft = request.body
+    console.log(onDemandNft.assets[0])
+    // Make sure there's only ever one entry
+    /*
+    pool.query(`TRUNCATE ${target_table}`)
+    pool.query(`INSERT INTO ${target_table} (address, token, img_url, asset_url) VALUES ($1, $2, $3, $4)`, [address, token, img_url, asset_url], (error, results) => {
+        if (error) {
+          throw error
+        }
+        response.status(201).text("Your NFT is onDemand. Please refresh the display!")
+      })
+    */
+  }else{
+    response.status(111).send(`Cannot POST`)
+  }
+    
 }
 
 /* APP ENDPOINT FUNCTIONS */
@@ -195,6 +276,7 @@ const pushScreen = (request, response) => {
   app.post('screens/:location', pushScreen)
   app.get('/screens/:location/:id', getScreen)
   app.post('/screens/:location/:id', pushScreen)
+  //app.post('/screens/venice/a4fc6180c', pushOnDemand)
   // Update to have a page for each :location
   app.post('/on-demand', authenticate)
 
@@ -223,3 +305,4 @@ const pushScreen = (request, response) => {
   });
 
 })
+.catch(console.log("Error"))
