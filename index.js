@@ -9,8 +9,8 @@ const {body, check, validationResult} = require('express-validator')
 const bodyParser = require('body-parser')
 const fetch = require('node-fetch');
 const webSocketsServerPort = 1337
-/*
-const webSocketServer = require('websocket').server;
+
+const webSocketServer = require('websocket').server
 const http = require('http')
 //Spin up servers
 const server = http.createServer()
@@ -19,22 +19,75 @@ const wsServer = new webSocketServer({
   httpServer: server
 })
 
-const clients = {};
+/* WEBSOCKET DATA TRANSFER SCHEMA 
+* CLIENT sends: list of screens
+* SERVER takes list of screens and for-each pushes the current NFT
+* This way the client doesn't have to keep track of order, and all scheduling will be client-side
 */
-/*
+
+let count_test = 0
+
+const clients = {}
+
+nft_json_test = {"address" : "0xb932a70a57673d89f4acffbe830e8ed7f75fb9e0",
+"token" : "24210",
+"img_url": "https://ipfs.pixura.io/ipfs/QmNcvXCUu4zoc3GrJdANdTyZhwo4M43g6vkxEYtHdBR8xx/NFT.gif",
+"asset_url" : "https://ipfs.pixura.io/ipfs/QmNULY28ZmvTRZgxMWFka8cZqRMU5oUy4ECs84DfTF4Eab/NFT_50mb.mp4"
+},
+
 wsServer.on('request', function(request){
   console.log(`New request from ${request.origin}`)
   const connection = request.accept(null, request.origin)
-  clients[userID] = connection
+  clients[0] = connection
   console.log(`Connected: ${Object.getOwnPropertyNames(clients)}`)
+  clients[0].send(JSON.stringify(count_test))
 })
-*/
+
+wsServer.on('close', function(connection) {
+  console.log((new Date()) + " Peer " + clients[0] + " disconnected.");
+  delete clients[0];
+
+});
 
 const initial_json = require('./initial-nfts')
+
+const launch_json = require('./alpha_launch.json')
+
+const screens = launch_json.screens
+const launch_nfts = launch_json.nfts
+
+// TEMPORARY
+let nft_json = {}
+
+let now_showing = {}
+
+
+function create_launch_list(input){
+  launch_list = []
+  for (let i = 0; i < 5; i++){
+    token = input.nfts[i].token
+    address = input.nfts[i].address
+    fetch(`https://api.opensea.io/api/v1/assets?token_ids=${token}&asset_contract_address=${address}`, {
+      headers: {
+        "X-API-KEY": "04925cb4fa954de899c17562c18e972f"
+      }
+    })
+    .then(res => res.json())
+    .then(response => {
+      console.log(response.assets[0])
+      launch_list.push(response.assets[0])
+    })
+    .catch(console.log("ERROR in api"))
+  }
+  return launch_list
+}
+
 
 let token_list = []
 
 let on_demand_list = { }
+
+
 /* HELPER/PROCESSING FUNCTIONS */
 function isNumeric(n) {
   return !isNaN(parseFloat(n)) && isFinite(n);
@@ -51,55 +104,76 @@ function make_token_list(input_list){
   }
 }
 
-make_token_list(initial_json)
-const query_string = token_list.join("&")
 
-fetch(`https://api.opensea.io/api/v1/assets?token_ids=${query_string}`)
-.then(res => res.json())
-.then(response => {
+// Graceful error handling
+function make_site_json(input){
+
+  console.log(input)
+  for (r in input){
+    a = input[r]
+    console.log(a)
+    if (a == undefined){
+      nft_json[r] = {
+        "name" : "This item could not be displayed",
+        "description": "",
+        "image_url" : "",
+        "opensea_link": "",
+        "token": "",
+        "address": "",
+        "asset_url": ""
+      }
+    }else{    
+      nft_json[r] = {
+        "name" : a.name == null || a.name == undefined ? "Not found" : a.name,
+        "description": a.description == null || a.description == undefined ? "Not found" : a.description,
+        "image_url" : a.image_url == null || a.image_url == undefined || a.image_url.length <= 0 ? "Not found" : a.image_url,
+        "opensea_link": a.permalink == null || a.permalink == undefined ? "Not found" : a.permalink,
+        "creator_name": a.creator == null || a.creator == undefined ? "Not found" : (a.creator.user == null ? "Not found" : a.creator.user.username),
+        "token": a.token == null || a.token == undefined ? "No token" : a.token,
+        "address": a.address == null || a.address == undefined ? "Address not found" : a.address
+      }
+    }
+  }
+  console.log(nft_json)
+  return nft_json
+}
+
+//make_token_list(initial_json)
+//const query_string = token_list.join("&")
+make_site_json(launch_nfts)
+
   
-  const app = express()
-  const PORT = process.env.PORT || 3000;
+const app = express()
+const PORT = process.env.PORT || 3000;
 
 
   const origin = {
       '*' : '*',
   }
 
+  //Temp
   let rotation_position = {
     "a4fc611ae": 0,
     "a4fc6165e": 5,
     "a4fc61744": 15
   }
-  let nft_json = {}
-  //console.log(response)
-  for (r in response.assets){
-    a = response.assets[r]
-    //console.log(r)
-    //console.log(a)
-    if (a == undefined){
-      nft_json[r] = {
-        "name" : "This item could not be displayed",
-        "description": "",
-        "image_url" : "",
-        "opensea_link": ""
-      }
-    }else{    
-      console.log(a.creator == null ? "Null" : (a.creator.user == null ? "Null" : a.creator.user.username))
-      nft_json[r] = {
-        "name" : a.name == null || a.name == undefined ? "Not found" : a.name,
-        "description": a.description == null || a.description == undefined ? "Not found" : a.description,
-        "image_url" : a.image_url == null || a.image_url == undefined || a.image_url.length <= 0 ? "Not found" : a.image_url,
-        "opensea_link": a.permalink == null || a.permalink == undefined ? "Not found" : a.permalink,
-        "creator_name": a.creator == null || a.creator == undefined ? "Not found" : (a.creator.user == null ? "Not found" : a.creator.user.username)
-      }
-  }
-  }
-  //console.log(nft_json)
+
+
+//console.log(nft_json)
 
 
 
 //get_assets(token_list, API_PATH)
+
+
+async function process_input(input) {
+  console.log(input)
+  const launch_list = await create_launch_list(input)
+  console.log(launch_list)
+  const nft_json = make_site_json(launch_list)
+  console.log(nft_json)
+}
+
 
 
 
@@ -175,9 +249,8 @@ const getScreen = (request, response) => {
     const num = rotation_position[target_table]
     // UPDATE to opensea json
     const screen_nft = nft_json[num]
-    console.log(initial_json[num])
     // Update to conditional; if origin is brightmoments.com, give the full thing
-    if (target_table ){
+    if (target_table){
       if (target_table == "a4fc6180c"){
         response.status(200).json(onDemandNft)
         console.log(onDemandNft.image_url)
@@ -236,8 +309,7 @@ const pushScreen = (request, response) => {
       }else{
         response.status(111).send(`Cannot POST`)
       }
-    }
-      
+    } 
 }
 
 const pushOnDemand = (request, response) => {
@@ -286,23 +358,33 @@ const pushOnDemand = (request, response) => {
   });
 
   // Every two minutes, loop through the endpoints position array and increment the position
-  cron.schedule("* * * * *", () => {
-    let test = rotation_position['a4fc611ae']
+  // Send an array of objects with the schema "screen_id" : "data[num]" collected from the json file.
+  cron.schedule("*/10 * * * * *", () => {
+    console.log("Updating...")
+    // For each in screens, screens[screen], json[rotation_position]['screen']
+    console.log(screens)
+    console.log(rotation_position)
     for (const num in rotation_position) {
+      
+      console.log(rotation_position[num])
       //console.log(`${num}: ${rotation_position[num]}`);
       rotation_position[num]++
       // TODO: Update to dynamically accept schedule
       if (rotation_position[num] > 30){
         rotation_position[num] = 0
       }
+      console.log("Specific JSON")
+      console.log(nft_json[rotation_position[num]])
+      now_showing[num] = nft_json[rotation_position[num]]
     }
-    console.log("Screen Updating...")
-    console.log(nft_json[test])
+    console.log("Now showing object")
+    console.log(now_showing)
+    //console.log("Screen Updating...")
+    //console.log(nft_json[test])
+    clients[0].send(JSON.stringify(now_showing))
   });
 
   app.listen(PORT, () => {
-      console.log(`Our app is running on port ${ PORT }`);
+    //const launch_list = process_input(launch_json)
+    console.log(`Our app is running on port ${ PORT }`);
   });
-
-})
-.catch(console.log("Error"))
