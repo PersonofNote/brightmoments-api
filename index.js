@@ -352,9 +352,11 @@ const pushNewJson = (request, response) => {
       res.status(404).json({status: 404, message: "There's nothing here"});
   });
 
+  // TODO: Make screen-specific indices by looping through screen list.
+  let num = 0
   // Every two minutes, loop through the endpoints position array and increment the position
   // Send an array of objects with the schema "screen_id" : "data[num]" collected from the json file.
-  let num = 0
+ 
   cron.schedule("*/10 * * * * *", () => {
     console.log("MASTER LIST:")
     console.log(Object.keys(master_list))
@@ -364,15 +366,14 @@ const pushNewJson = (request, response) => {
       console.log(obj)
       console.log(num)
       now_showing = master_list[obj][num]
-    
       now_showing_list[obj] = now_showing
-      
+      // TODO: Move index wrapping logic in here when it's screen specific
     }
     console.log("NOW SHOWING LIST:")
     console.log(now_showing_list["a4fc6165e"])
     console.log("Updating...")
     num++
-    if(num>2){
+    if(num>5){
       num = 0
     }
    
