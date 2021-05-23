@@ -35,7 +35,7 @@ wsServer.on('request', function(request){
   const connection = request.accept(null, request.origin)
   clients[0] = connection
   console.log(`Connected: ${Object.getOwnPropertyNames(clients)}`)
-  //clients[0].send(JSON.stringify(master_list))
+  clients[0].send(JSON.stringify(now_showing))
 })
 
 wsServer.on('close', function(connection) {
@@ -48,11 +48,12 @@ const initial_json = require('./initial-nfts')
 
 const launch_json = require('./alpha_launch.json')
 
+const json_screen2 = require('./sample_alpha_json.json')
+
 const screens = launch_json.screens
 const launch_nfts = launch_json.nfts
+const launch_nfts_2 = json_screen2.nfts
 
-// TEMPORARY
-let nft_json = {}
 
 let now_showing = {}
 
@@ -103,6 +104,7 @@ function make_token_list(input_list){
 
 // Graceful error handling
 function make_site_json(input){
+  let nft_json = {}
   for (r in input){
     a = input[r]
     if (a == undefined){
@@ -118,11 +120,11 @@ function make_site_json(input){
       }
     }else{    
       nft_json[r] = {
-        "name" : a.name == null || a.name == undefined ? "Not found" : a.name,
+        "name" : a.name == null || a.name == undefined ? "NFT Title Not found" : a.name,
         "description": a.description == null || a.description == undefined ? "Not found" : a.description,
         "original_image_url" : a.original_image_url == null || a.original_image_url == undefined || a.original_image_url.length <= 0 ? "Not found" : a.original_image_url,
         "external_url": a.external_url == null || a.external_url == undefined ? "Not found" : a.external_url,
-        "creator": a.creator == null || a.creator == undefined ? "Not found" : (a.creator.user == null ? "Not found" : a.creator.user.username),
+        "creator": a.creator == null || a.creator == undefined ? "Creator Unknown" : (a.creator.user == null ? "Not found" : a.creator.user.username),
         "token_id": a.token_id == null || a.token_id == undefined ? "No token" : a.token_id,
         "contract_address": a.contract_address == null || a.contract_address == undefined ? "Address not found" : a.contract_address
       }
@@ -133,19 +135,30 @@ function make_site_json(input){
 
 //make_token_list(initial_json)
 //const query_string = token_list.join("&")
-make_site_json(launch_nfts)
+const json_1 = make_site_json(launch_nfts)
+const json_2 = make_site_json(launch_nfts_2)
 
-let master_list = {}
-let now_showing_list = {}
 
-for (screen in screens){
-  master_list[screens[screen]] = make_site_json(launch_nfts)
-  
+let master_list = {
+  "a4fc611ae": json_1,
+  "a4fc6165e": json_2,
+  "a4fc61744": json_1
 }
-console.log("MASTER LIST:")
+
 console.log(master_list)
 
+let now_showing_list = {}
 
+/*
+for (screen in screens){
+  if (screens[screen] == "a4fc6165e"){
+    master_list[screens[screen]] = json_2
+    console.log(json_screen2.nfts)
+  }
+  master_list[screens[screen]] = json_1
+  
+}
+*/
 
   
 const app = express()
@@ -156,12 +169,6 @@ const PORT = process.env.PORT || 3000;
       '*' : '*',
   }
 
-  //Temp
-  let rotation_position = {
-    "a4fc611ae": 0,
-    "a4fc6165e": 5,
-    "a4fc61744": 15
-  }
 
 
 //console.log(nft_json)
@@ -304,7 +311,9 @@ const pushScreen = (request, response) => {
     else{
       console.log(allowed_endpoints.includes(target_table))
       if (allowed_endpoints.includes(target_table)){
-        master_list[target_table] = JSON.stringify(request.body)
+        // TODO: Make sure that the make_site_json is part of this
+        const new_schedule = make_site_json(JSON.stringify(request.body))
+        master_list[target_table] = new_schedule
         console.log(`NEW SCHEDULE ADDED TO SCREEN ${target_table} `)
         console.log(master_list)
         // Make sure there's only ever one entry
@@ -352,31 +361,33 @@ const pushNewJson = (request, response) => {
       res.status(404).json({status: 404, message: "There's nothing here"});
   });
 
+    //TODO: remove hardcoding
+    // For each screen, assign a starting position of 0
+    let rotation_position = {
+      "a4fc611ae": 0,
+      "a4fc6165e": 0,
+      "a4fc61744": 0
+    }
+  
+
   // TODO: Make screen-specific indices by looping through screen list.
-  let num = 0
   // Every two minutes, loop through the endpoints position array and increment the position
   // Send an array of objects with the schema "screen_id" : "data[num]" collected from the json file.
- 
   cron.schedule("*/10 * * * * *", () => {
-    console.log("MASTER LIST:")
-    console.log(Object.keys(master_list))
+    console.log("Updating...")
     //console.log(master_list['a4fc6165e'])
-    //console.log(Object.keys(master_list[screen]).length)
     for (obj in master_list){
       console.log(obj)
-      console.log(num)
-      now_showing = master_list[obj][num]
+      now_showing = master_list[obj][rotation_position[obj]]
       now_showing_list[obj] = now_showing
-      // TODO: Move index wrapping logic in here when it's screen specific
+      rotation_position[obj]++
+      if(rotation_position[obj]>Object.keys(master_list[obj]).length-1){
+        rotation_position[obj] = 0
+      }
+
+      console.log("ROTATION LIST:")
+      console.log(rotation_position)
     }
-    console.log("NOW SHOWING LIST:")
-    console.log(now_showing_list["a4fc6165e"])
-    console.log("Updating...")
-    num++
-    if(num>5){
-      num = 0
-    }
-   
     clients[0].send(JSON.stringify(now_showing_list))
     
   });
