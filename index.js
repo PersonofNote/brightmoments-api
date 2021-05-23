@@ -16,8 +16,10 @@ const http = require('http')
 const server = http.createServer()
 server.listen(webSocketsServerPort)
 const wsServer = new webSocketServer({
-  httpServer: server
+  httpServer: server,
+  path: "/livestream"
 })
+
 
 /* WEBSOCKET DATA TRANSFER SCHEMA 
 * CLIENT sends: list of screens
@@ -145,7 +147,6 @@ let master_list = {
   "a4fc61744": json_1
 }
 
-console.log(master_list)
 
 let now_showing_list = {}
 
@@ -374,10 +375,7 @@ const pushNewJson = (request, response) => {
   // Every two minutes, loop through the endpoints position array and increment the position
   // Send an array of objects with the schema "screen_id" : "data[num]" collected from the json file.
   cron.schedule("*/10 * * * * *", () => {
-    console.log("Updating...")
-    //console.log(master_list['a4fc6165e'])
     for (obj in master_list){
-      console.log(obj)
       now_showing = master_list[obj][rotation_position[obj]]
       now_showing_list[obj] = now_showing
       rotation_position[obj]++
@@ -385,8 +383,6 @@ const pushNewJson = (request, response) => {
         rotation_position[obj] = 0
       }
 
-      console.log("ROTATION LIST:")
-      console.log(rotation_position)
     }
     clients[0].send(JSON.stringify(now_showing_list))
     
