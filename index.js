@@ -14,6 +14,7 @@ const webSocketServer = require('websocket').server
 const http = require('http')
 //Spin up servers
 const server = http.createServer()
+
 server.listen(webSocketsServerPort)
 const wsServer = new webSocketServer({
   httpServer: server,
@@ -118,13 +119,16 @@ function make_site_json(input){
         "token_id": "",
         "contract_address": "",
         "asset_url": "",
-        "creator": ""
+        "creator": "",
+        "original_asset_url": ""
       }
     }else{    
       nft_json[r] = {
-        "name" : a.name == null || a.name == undefined ? "NFT Title Not found" : a.name,
+        // TODO: Fix this discrepancy
+        "title" : a.title == null || a.title == undefined ? "Title Unknown" : a.title,
         "description": a.description == null || a.description == undefined ? "Not found" : a.description,
         "original_image_url" : a.original_image_url == null || a.original_image_url == undefined || a.original_image_url.length <= 0 ? "Not found" : a.original_image_url,
+        "original_asset_url": a.original_asset_url == null || a.original_asset_url == undefined ? "" : a.original_asset_url,
         "external_url": a.external_url == null || a.external_url == undefined ? "Not found" : a.external_url,
         "creator": a.creator == null || a.creator == undefined ? "Creator Unknown" : (a.creator.user == null ? "Not found" : a.creator.user.username),
         "token_id": a.token_id == null || a.token_id == undefined ? "No token" : a.token_id,
