@@ -384,7 +384,8 @@ const pushNewJson = (request, response) => {
   // TODO: Make screen-specific indices by looping through screen list.
   // Every two minutes, loop through the endpoints position array and increment the position
   // Send an array of objects with the schema "screen_id" : "data[num]" collected from the json file.
-  cron.schedule("* * * * * *", () => {
+  cron.schedule("*/2 * * * *", () => {
+    console.log("Updating...")
     for (obj in master_list){
       now_showing = master_list[obj][rotation_position[obj]]
       now_showing_list[obj] = now_showing
@@ -392,8 +393,8 @@ const pushNewJson = (request, response) => {
       if(rotation_position[obj]>Object.keys(master_list[obj]).length-1){
         rotation_position[obj] = 0
       }
-
     }
+    console.log(now_showing_list)
     clients[0].send(JSON.stringify(now_showing_list))
     
   });
