@@ -8,7 +8,7 @@ const rateLimit = require('express-rate-limit')
 const {body, check, validationResult} = require('express-validator')
 const bodyParser = require('body-parser')
 const fetch = require('node-fetch');
-const webSocketsServerPort = process.env.WEBSOCKET || 1337
+const webSocketsServerPort = process.env.WEBSOCKET || 443
 
 const webSocketServer = require('websocket').server
 const http = require('http')
