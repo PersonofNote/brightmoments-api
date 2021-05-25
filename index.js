@@ -129,7 +129,7 @@ function make_site_json(input){
         "original_image_url" : a.original_image_url == null || a.original_image_url == undefined || a.original_image_url.length <= 0 ? "Not found" : a.original_image_url,
         "original_asset_url": a.original_asset_url == null || a.original_asset_url == undefined ? "" : a.original_asset_url,
         "external_url": a.external_url == null || a.external_url == undefined ? "Not found" : a.external_url,
-        "creator": a.creator == null || a.creator == undefined ? "Creator Unknown" : (a.creator.user == null ? "Not found" : a.creator.user.username),
+        "creator": a.creator == null || a.creator == undefined ? "Creator Unknown" : a.creator,
         "token_id": a.token_id == null || a.token_id == undefined ? "No token" : a.token_id,
         "contract_address": a.contract_address == null || a.contract_address == undefined ? "Address not found" : a.contract_address
       }
@@ -324,6 +324,7 @@ const pushScreen = (request, response) => {
         master_list[target_table] = new_schedule
         console.log(`NEW SCHEDULE ADDED TO SCREEN ${target_table} `)
         console.log(master_list)
+        response.status(200).send('Schedule updated')
         // Make sure there's only ever one entry
         /*
         pool.query(`TRUNCATE ${target_table}`)
