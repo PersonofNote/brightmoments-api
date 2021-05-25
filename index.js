@@ -128,7 +128,8 @@ function make_site_json(input){
         "contract_address": "",
         "asset_url": "",
         "creator": "",
-        "original_asset_url": ""
+        "original_asset_url": "",
+        "zoom": ""
       }
     }else{    
       nft_json[r] = {
@@ -140,7 +141,8 @@ function make_site_json(input){
         "external_url": a.external_url == null || a.external_url == undefined ? "Not found" : a.external_url,
         "creator": a.creator == null || a.creator == undefined ? "Creator Unknown" : a.creator,
         "token_id": a.token_id == null || a.token_id == undefined ? "No token" : a.token_id,
-        "contract_address": a.contract_address == null || a.contract_address == undefined ? "Address not found" : a.contract_address
+        "contract_address": a.contract_address == null || a.contract_address == undefined ? "Address not found" : a.contract_address,
+        "zoom": a.zoom == null || a.zoom == undefined ? " " : a.zoom
       }
     }
   }
