@@ -59,6 +59,15 @@ const launch_nfts_2 = json_screen2.nfts
 
 let now_showing = {}
 
+const app = express()
+const PORT = process.env.PORT || 1236;
+
+
+  const origin = {
+      '*' : '*',
+  }
+
+
 
 /*
 function make_schedule(input){
@@ -168,13 +177,6 @@ for (screen in screens){
 */
 
   
-const app = express()
-const PORT = process.env.PORT || 3000;
-
-
-  const origin = {
-      '*' : '*',
-  }
 
 
 
@@ -382,7 +384,7 @@ const pushNewJson = (request, response) => {
   // TODO: Make screen-specific indices by looping through screen list.
   // Every two minutes, loop through the endpoints position array and increment the position
   // Send an array of objects with the schema "screen_id" : "data[num]" collected from the json file.
-  cron.schedule("*/10 * * * * *", () => {
+  cron.schedule("* * * * * *", () => {
     for (obj in master_list){
       now_showing = master_list[obj][rotation_position[obj]]
       now_showing_list[obj] = now_showing
