@@ -17,8 +17,7 @@ const server = http.createServer()
 
 server.listen(webSocketsServerPort)
 const wsServer = new webSocketServer({
-  httpServer: server,
-  path: "/livestream"
+  httpServer: server
 })
 
 
@@ -150,6 +149,9 @@ let master_list = {
   "a4fc6165e": json_2,
   "a4fc61744": json_1
 }
+
+console.log("MASTER LIST:")
+console.log(master_list)
 
 
 let now_showing_list = {}
@@ -311,13 +313,14 @@ const pushScreen = (request, response) => {
     console.log(request.body)
     if (target_table == "a4fc6180c"){
       onDemandNft = request.body.assets[0]
-      console.log(onDemandNft)
     }
     else{
-      console.log(allowed_endpoints.includes(target_table))
       if (allowed_endpoints.includes(target_table)){
+        console.log(JSON.stringify(request.body))
         // TODO: Make sure that the make_site_json is part of this
-        const new_schedule = make_site_json(JSON.stringify(request.body))
+        const new_schedule = make_site_json(request.body.nfts)
+        console.log("NEW")
+        console.log(new_schedule)
         master_list[target_table] = new_schedule
         console.log(`NEW SCHEDULE ADDED TO SCREEN ${target_table} `)
         console.log(master_list)
