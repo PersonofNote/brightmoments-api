@@ -178,13 +178,7 @@ for (screen in screens){
 }
 */
 
-  
-
-
-
 //console.log(nft_json)
-
-
 
 //get_assets(token_list, API_PATH)
 
@@ -326,6 +320,7 @@ const pushScreen = (request, response) => {
         console.log("NEW")
         console.log(new_schedule)
         master_list[target_table] = new_schedule
+        rotation_position[target_table] = 0
         console.log(`NEW SCHEDULE ADDED TO SCREEN ${target_table} `)
         console.log(master_list)
         response.status(200).send('Schedule updated')
