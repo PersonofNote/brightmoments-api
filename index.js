@@ -1,18 +1,17 @@
+// TOOD: Implement JSON schema validator
 const cron = require('node-cron')
 const express = require('express')
 const cors = require('cors')
-const { pool } = require('./config')
+// const { pool } = require('./db/config')
 const helmet = require('helmet')
 const compression = require('compression')
 const rateLimit = require('express-rate-limit')
-const {body, check, validationResult} = require('express-validator')
 const bodyParser = require('body-parser')
 const fetch = require('node-fetch');
 const webSocketsServerPort = process.env.WEBSOCKET || 3000
 
 const webSocketServer = require('websocket').server
 const http = require('http')
-//Spin up servers
 const server = http.createServer()
 
 server.listen(webSocketsServerPort)
@@ -20,13 +19,8 @@ const wsServer = new webSocketServer({
   httpServer: server
 })
 
-
-/* WEBSOCKET DATA TRANSFER SCHEMA 
-* CLIENT sends: list of screens
-* SERVER takes list of screens and for-each pushes the current NFT
-* This way the client doesn't have to keep track of order, and all scheduling will be client-side
-*/
-
+const app = express()
+const PORT = process.env.PORT || 1236;
 
 const clients = {}
 
@@ -35,6 +29,7 @@ const schedule_list = { }
 wsServer.on('request', function(request){
   console.log(`New request from ${request.origin}`)
   const connection = request.accept(null, request.origin)
+  // TODO: Implement a unique ID assignment; this is a really quick and dirty implementation
   clients[0] = connection
   console.log(`Connected: ${Object.getOwnPropertyNames(clients)}`)
   clients[0].send(JSON.stringify(now_showing))
@@ -46,74 +41,33 @@ wsServer.on('close', function(connection) {
 
 });
 
-const initial_json = require('./initial-nfts')
-
-const launch_json = require('./alpha_launch.json')
-
-const json_screen2 = require('./sample_alpha_json.json')
+// TEMPORARY hard-coded JSON from Scott
+const initial_json = require('./assets/initial-nfts')
+const launch_json = require('./assets/alpha_launch.json')
+const launch_nfts = launch_json.nfts
+const json_screen2 = require('.assets/sample_alpha_json.json')
+const launch_nfts_2 = json_screen2.nfts
 
 const screens = launch_json.screens
-const launch_nfts = launch_json.nfts
-const launch_nfts_2 = json_screen2.nfts
+
+
 
 
 let now_showing = {}
 
-const app = express()
-const PORT = process.env.PORT || 1236;
 
-
-  const origin = {
+// NEED valid IP address from gallery for security on POSTS! Currently it's all security through obscurity
+const origin = {
       '*' : '*',
   }
 
 
-
-/*
-function make_schedule(input){
-  launch_list = []
-  for (let i = 0; i < 5; i++){
-    token = input.nfts[i].token
-    address = input.nfts[i].address
-    fetch(`https://api.opensea.io/api/v1/assets?token_ids=${token}&asset_contract_address=${address}`, {
-      headers: {
-        "X-API-KEY": "04925cb4fa954de899c17562c18e972f"
-      }
-    })
-    .then(res => res.json())
-    .then(response => {
-      console.log(response.assets[0])
-      launch_list.push(response.assets[0])
-    })
-    .catch(console.log("ERROR in api"))
-  }
-  return launch_list
-}
-*/
-
-let token_list = []
-
-let on_demand_list = { }
-
-
-/* HELPER/PROCESSING FUNCTIONS */
 function isNumeric(n) {
   return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
-function make_token_list(input_list){
-  /* For each bit of json, check if the token field is a valid number. If so, add it to the list */
-  for (const i in input_list) {
-    if (isNumeric(Number(input_list[i].token))){
-      token_list.push(input_list[i].token)
-    }else{
-      console.log("Bad input")
-    }
-  }
-}
 
-
-// Graceful error handling
+// Error handling and accomodating missing fields
 function make_site_json(input){
   let nft_json = {}
   for (r in input){
@@ -133,7 +87,6 @@ function make_site_json(input){
       }
     }else{    
       nft_json[r] = {
-        // TODO: Fix this discrepancy
         "title" : a.title == null || a.title == undefined ? "Title Unknown" : a.title,
         "description": a.description == null || a.description == undefined ? "Not found" : a.description,
         "original_image_url" : a.original_image_url == null || a.original_image_url == undefined || a.original_image_url.length <= 0 ? "Not found" : a.original_image_url,
@@ -149,8 +102,7 @@ function make_site_json(input){
   return nft_json
 }
 
-//make_token_list(initial_json)
-//const query_string = token_list.join("&")
+// TODO: Update to use Notion as DB
 const json_1 = make_site_json(launch_nfts)
 const json_2 = make_site_json(launch_nfts_2)
 
@@ -167,16 +119,6 @@ console.log(master_list)
 
 let now_showing_list = {}
 
-/*
-for (screen in screens){
-  if (screens[screen] == "a4fc6165e"){
-    master_list[screens[screen]] = json_2
-    console.log(json_screen2.nfts)
-  }
-  master_list[screens[screen]] = json_1
-  
-}
-*/
 
 //console.log(nft_json)
 
@@ -192,32 +134,15 @@ async function process_input(input) {
 }
 
 
-
-
-  function populate_db(json){
-    for (let i = 0; i < json.length; i++) {
-      console.log(json[i])
-    }
-  }
-
 let onDemandNft = {
   message: "Waiting for input"
 }
 
-
 const limiter = rateLimit({
     windowMs: 1 * 60 * 1000, // 1 minute
-    max: 100, // num requests
+    max: 15, // num requests
     message: "Too many requests, please try again later"
   })
-
-  // Limit posting comments to 1 request/minute
-const postLimiter = rateLimit({
-    windowMs: 1 * 60 * 1000,
-    max: 20,
-
-  })
- 
 
 app.use(cors(origin))
 app.use(compression())
@@ -247,7 +172,7 @@ const getLocalScreens = (request, response) => {
     console.log(request.body)
     response.json({ status: 200, message: `All screens for a location` })
     /*
-    pool.query('SELECT * FROM temp_screens', (error, results) => {
+    pool.query('SELECT * FROM screens', (error, results) => {
         if (error) {
           throw error
         }
@@ -258,97 +183,43 @@ const getLocalScreens = (request, response) => {
 
 
 const getScreen = (request, response) => {
-    const allowed_endpoints = ["a4fc611ae", "a4fc6165e","a4fc61744", "a4fc6180c"]
-    console.log("GET REQUEST:")
-    console.log(request.body)
-    target_table = request.params.id
-    console.log(rotation_position[target_table])
-    const num = rotation_position[target_table]
-    // UPDATE to opensea json
-    const screen_nft = now_showing_list[target_table]
-    // Update to conditional; if origin is brightmoments.com, give the full thing
-    if (target_table){
-      if (target_table == "a4fc6180c"){
-        response.status(200).json(onDemandNft)
-        console.log(onDemandNft.image_url)
-        console.log("SUCCESSFUL GET")
-      }else {
-        response.status(200).json(screen_nft)
-        console.log(screen_nft)
-      }
-
-      
-      /*
-      // TEST THIS
-      if (target_table == "a4fc6180c"){
-        fetch(`https://api.opensea.io/api/v1/assets?token_ids=${query_string}`)
-        .then(res => res.json())
-        .then(response.status(200).json(res))
-      }else{
-        response.status(200).json(screen_nft)
-
-      }
-      */
+  target_table = request.params.id
+  console.log(rotation_position[target_table])
+  const num = rotation_position[target_table]
+  // UPDATE to opensea json
+  const screen_nft = now_showing_list[target_table]
+  // Update to conditional; if origin is brightmoments.com, give the full thing
+  if (target_table){
+    // *****TEMPORARY hacky solution for gallery opening*******
+    if (target_table == "a4fc6180c"){
+      response.status(200).json(onDemandNft)
+    }else {
+      response.status(200).json(screen_nft)
     }
-    
-    /*
-    pool.query(`SELECT * FROM ${target_table}`, (error, results) => {
-        if (error) {
-          throw error
-        }
-        response.status(200).json(results.rows)
-      })
-  */
-}
+  }
 
 const pushScreen = (request, response) => {
     target_table = request.params.id
     console.log("🚨🚨🚨🚨🚨🚨🚨🚨")
     console.log(`Incoming PUSH to ${target_table}`)
     const allowed_endpoints = ["a4fc611ae", "a4fc6165e","a4fc61744", "a4fc6180c"]
-    //const { contract_address, token_id, original_image_url, title, creator, external_url } = request.body
     // On-demand exception
-    console.log(request.body)
     if (target_table == "a4fc6180c"){
       onDemandNft = request.body.assets[0]
     }
     else{
       if (allowed_endpoints.includes(target_table)){
-        console.log(JSON.stringify(request.body))
-        // TODO: Make sure that the make_site_json is part of this
         const new_schedule = make_site_json(request.body.nfts)
-        console.log("NEW")
-        console.log(new_schedule)
         master_list[target_table] = new_schedule
         rotation_position[target_table] = 0
         console.log(`NEW SCHEDULE ADDED TO SCREEN ${target_table} `)
-        console.log(master_list)
         response.status(200).send('Schedule updated')
-        // Make sure there's only ever one entry
-        /*
-        pool.query(`TRUNCATE ${target_table}`)
-        pool.query(`INSERT INTO ${target_table} (address, token, img_url, asset_url) VALUES ($1, $2, $3, $4)`, [address, token, img_url, asset_url], (error, results) => {
-            if (error) {
-              throw error
-            }
-            response.status(201).send(`Inserted into ${target_table}: ${results}`)
-          })
       }else{
-        response.status(111).send(`Cannot POST`)
-      }
-        */
-      }else{
-        response.status(503).send(`Get out of here`)
+        response.status(503).send('Forbidden')
       }
     }
   }
 
-/*
-const pushNewJson = (request, response) => {
-  console.log(response)
-  const { address, token, img_url, asset_url,  } = request.body
-}
-*/
 /* APP ENDPOINT FUNCTIONS */
   app.get('/', (request, response) => {
       response.json({ info: 'Hello, world' })
@@ -360,6 +231,7 @@ const pushNewJson = (request, response) => {
   app.get('/screens/:location/:id', getScreen)
   app.post('/screens/:location/:id', pushScreen)
   //app.post('/screens/venice/a4fc6180c', pushOnDemand)
+  // TEMPORARY for gallery opening
   // Update to have a page for each :location
   app.post('/on-demand', authenticate)
   app.post('/', )

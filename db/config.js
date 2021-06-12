@@ -1,3 +1,10 @@
+/**
+ * 
+ * This file is deprecated. I am keeping it in case we do decide to come back to using our own database
+ * but the vote is to use Notion as much as possible as a CMS/database solution
+ * 
+ */
+
 require('dotenv').config()
 
 const {Pool} = require('pg')
