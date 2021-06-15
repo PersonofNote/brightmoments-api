@@ -45,7 +45,7 @@ wsServer.on('close', function(connection) {
 const initial_json = require('./assets/initial-nfts')
 const launch_json = require('./assets/alpha_launch.json')
 const launch_nfts = launch_json.nfts
-const json_screen2 = require('.assets/sample_alpha_json.json')
+const json_screen2 = require('./assets/sample_alpha_json.json')
 const launch_nfts_2 = json_screen2.nfts
 
 const screens = launch_json.screens
@@ -197,6 +197,7 @@ const getScreen = (request, response) => {
       response.status(200).json(screen_nft)
     }
   }
+}
 
 const pushScreen = (request, response) => {
     target_table = request.params.id
